@@ -1,0 +1,76 @@
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+  <script type="text/javascript">
+    let stompClient = null;
+    let privateStompClient = null;
+
+    let socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
+      console.log(frame);
+      stompClient.subscribe('/common/messages', function (result) {
+        show(JSON.parse(result.body));
+      });
+    });
+
+    socket = new SockJS('/ws');
+    privateStompClient = Stomp.over(socket);
+    privateStompClient.connect({}, function (frame) {
+      console.log(frame);
+      privateStompClient.subscribe('/user/specific', function (result) {
+        console.log(result.body)
+        show(JSON.parse(result.body));
+      });
+    });
+
+    function sendMessage() {
+      let text = document.getElementById('text').value;
+      let from = document.getElementById('nickname').value;
+      stompClient.send("/app/application", {},
+          JSON.stringify({'content': text, 'from': from}));
+    }
+
+    function sendPrivateMessage() {
+      let text = document.getElementById('privateText').value;
+      let from = document.getElementById('nickname').value;
+      let to = document.getElementById('to').value;
+      stompClient.send("/app/private", {},
+          JSON.stringify({'content': text, 'to': to, 'from': from}));
+    }
+
+    function show(message) {
+      let response = document.getElementById('messages');
+      let p = document.createElement('p');
+      p.innerHTML = message.from + ": " + message.content;
+      response.appendChild(p);
+    }
+  </script>
+</head>
+<body>
+<div>
+  <div>
+    <input type="text" id="nickname" placeholder="nickname"/>
+  </div>
+  <br>
+  <div>
+    <button id="sendMessage" onclick="sendMessage();">Send common message</button>
+    <input type="text" id="text" placeholder="message"/>
+  </div>
+  <br/>
+  <div>
+    <button id="sendPrivateMessage" onclick="sendPrivateMessage();">Send private message</button>
+    <input type="text" id="privateText" placeholder="message"/>
+    <input type="text" id="to" placeholder="to"/>
+  </div>
+  <br/>
+  <br/>
+  <br/>
+  <h2>Messages:</h2>
+  <div id="messages"></div>
+
+</div>
+
+</body>
+</html>
