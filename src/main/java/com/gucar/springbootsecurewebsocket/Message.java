@@ -7,4 +7,5 @@ public class Message {
 
   private String content;
   private String to;
+  private String from;
 }
